@@ -2,693 +2,468 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Seemax - Foglio Preventivo</title>
-
-  <!-- PDF libs (no stampa) -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-
   <style>
     :root{
-      --bg1:#070b17;
-      --bg2:#0b2a3a;
-      --paper:#ffffff;
-      --ink:#0b1220;
+      --bg1:#0b1020;
+      --bg2:#0a2a3a;
+      --card:#ffffff;
+      --ink:#101828;
       --muted:#667085;
-      --line:#e7ecf5;
+      --line:#d0d5dd;
+      --soft:#eef2ff;
       --accent:#2563eb;
-      --danger:#b91c1c;
-      --shadow: 0 20px 60px rgba(0,0,0,.45);
-      --radius: 18px;
+      --danger:#ef4444;
+      --red:#ef4444;
+      --blue:#2563eb;
+      --radius:14px;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      color:#eaf0ff;
-      background: radial-gradient(1200px 700px at 30% 15%, #12214d 0%, rgba(18,33,77,0) 55%),
-                  radial-gradient(900px 600px at 85% 35%, #0b3a46 0%, rgba(11,58,70,0) 55%),
-                  linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--ink);
+      background: radial-gradient(1200px 600px at 50% 25%, #163a5a 0%, var(--bg1) 55%, #050813 100%);
     }
 
     /* Top bar */
     .topbar{
-      position:sticky; top:0; z-index:20;
-      background: rgba(6,10,24,.65);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding: 14px 14px;
+      background: linear-gradient(180deg, rgba(6,10,24,0.92) 0%, rgba(6,10,24,0.65) 100%);
       backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255,255,255,.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .topbarInner{
-      max-width: 1050px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 12px 16px;
       display:flex;
-      align-items:center;
       justify-content:center;
-      gap:10px;
+      gap:12px;
+      align-items:center;
     }
     .btn{
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.06);
-      color:#f3f6ff;
+      appearance:none;
+      border:1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
       padding: 10px 14px;
       border-radius: 999px;
       font-weight: 600;
-      font-size: 13px;
+      font-size: 14px;
       cursor:pointer;
+      transition: transform .04s ease, background .15s ease, border-color .15s ease;
       user-select:none;
-      transition: transform .06s ease, background .12s ease, border-color .12s ease;
     }
-    .btn:hover{ background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.22);}
-    .btn:active{ transform: scale(.99); }
+    .btn:active{transform: translateY(1px)}
+    .btn:hover{background: rgba(255,255,255,0.10)}
     .btnPrimary{
-      background: var(--accent);
-      border-color: rgba(255,255,255,.0);
+      background: rgba(37,99,235,0.95);
+      border-color: rgba(37,99,235,1);
     }
-    .btnPrimary:hover{ background:#1e55da; }
+    .btnPrimary:hover{background: rgba(37,99,235,1)}
     .btnDanger{
-      background: rgba(185,28,28,.18);
-      border-color: rgba(185,28,28,.35);
-      color:#ffd7d7;
+      background: rgba(239,68,68,0.16);
+      border-color: rgba(239,68,68,0.55);
     }
+    .btnDanger:hover{background: rgba(239,68,68,0.22)}
+    .btn[disabled]{opacity:.5; cursor:not-allowed}
 
+    /* Card */
     .wrap{
-      max-width: 1050px;
-      margin: 24px auto 60px;
-      padding: 0 16px;
-      display:flex;
-      justify-content:center;
+      padding: 26px 14px 40px;
     }
-
-    /* Paper */
-    .paper{
-      width: 210mm;
-      min-height: 297mm;
-      background: var(--paper);
-      color: var(--ink);
+    .sheet{
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 22px 22px 18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+      padding: 26px 26px 22px;
     }
 
-    /* Header inside paper */
-    .headerRow{
+    .header{
       display:grid;
-      grid-template-columns: 1fr 300px;
+      grid-template-columns: 1.4fr 1fr;
       gap: 18px;
       align-items:start;
     }
-    .logoBox{
-      height: 70px;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background:#f5f7ff;
+    .logoBanner{
+      background: #f3f6ff;
+      border: 1px solid #e6ecff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      min-height: 64px;
       display:flex;
       align-items:center;
-      padding: 10px 14px;
+      justify-content:center;
       overflow:hidden;
     }
-    .logoBox img{
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
+    /* No stretch: height fixed, width auto */
+    .logoImg{
+      height: 44px;
+      width: auto;
+      max-width: 100%;
       display:block;
     }
 
     .metaGrid{
       display:grid;
       grid-template-columns: 120px 1fr;
-      column-gap: 10px;
-      row-gap: 8px;
+      gap: 10px 14px;
       align-items:center;
-      font-size: 12px;
-      color: var(--muted);
     }
-    .metaGrid label{
+    .label{
+      font-size: 12px;
       color: var(--muted);
       font-weight: 600;
-      font-size: 11px;
     }
-    .metaGrid input, .metaGrid select{
-      width:100%;
-      border: none;
-      border-bottom: 1px solid #cfd7ea;
-      padding: 6px 6px;
-      font-size: 12px;
-      outline: none;
+    .field{
+      border:0;
+      border-bottom: 1px solid #cbd5e1;
+      padding: 6px 2px;
+      font-size: 13px;
+      outline:none;
+      width: 100%;
       background: transparent;
-      color: var(--ink);
+    }
+    .field:focus{border-bottom-color: var(--accent)}
+    .select{
+      border:0;
+      border-bottom: 1px solid #cbd5e1;
+      padding: 6px 2px;
+      font-size: 13px;
+      outline:none;
+      background: transparent;
+      width:100%;
     }
 
     .titleRow{
-      margin-top: 10px;
+      margin-top: 14px;
       display:flex;
       align-items:flex-end;
       gap: 14px;
     }
     .titleRow h1{
       margin: 0;
-      font-size: 20px;
-      letter-spacing: .12em;
-      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: 0.14em;
+      font-weight: 900;
     }
-    .titleRow .line{
+    .redLine{
       height: 4px;
-      background: #ef4444;
+      background: var(--red);
       flex: 1;
       border-radius: 999px;
-      transform: translateY(-4px);
+      transform: translateY(-2px);
     }
 
-    /* Section titles */
-    .sectionTitle{
-      margin: 14px 0 8px;
-      font-size: 11px;
-      letter-spacing: .08em;
-      font-weight: 800;
-      color: #1f2a44;
+    .section{
+      margin-top: 14px;
+    }
+    .section h2{
+      margin: 0 0 10px;
+      font-size: 12px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: #101828;
     }
 
-    .twoCols{
+    .twoCol{
       display:grid;
       grid-template-columns: 1fr 1fr;
-      gap: 18px;
+      gap: 12px 18px;
     }
 
-    .fieldGrid{
+    .kv{
       display:grid;
       grid-template-columns: 120px 1fr;
-      column-gap: 10px;
-      row-gap: 8px;
+      gap: 10px 12px;
       align-items:center;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .fieldGrid label{
-      font-weight: 600;
-      font-size: 11px;
-      color: var(--muted);
-      white-space:nowrap;
-    }
-    .fieldGrid input{
-      width:100%;
-      border: none;
-      border-bottom: 1px solid #cfd7ea;
-      padding: 6px 6px;
-      font-size: 12px;
-      outline: none;
-      background: transparent;
-      color: var(--ink);
     }
 
-    /* Products */
-    .tableWrap{
-      border: 1px solid var(--line);
+    /* Items table */
+    .itemsWrap{
+      background: #f6f8ff;
+      border: 1px solid #e6ecff;
       border-radius: 12px;
-      overflow: hidden;
-      background: #fbfcff;
-    }
-    .tableScroller{
-      overflow-x:auto;
-      -webkit-overflow-scrolling: touch;
-      background:#fbfcff;
+      overflow:hidden;
     }
     table{
       width:100%;
       border-collapse: collapse;
-      min-width: 760px;
     }
     thead th{
-      font-size: 11px;
-      color:#334155;
       text-align:left;
+      font-size: 12px;
+      color:#101828;
       padding: 10px 10px;
-      background: #f2f5ff;
-      border-bottom: 1px solid var(--line);
-      white-space:nowrap;
+      background: #eef2ff;
+      border-bottom: 1px solid #e6ecff;
+      font-weight: 800;
     }
     tbody td{
       padding: 10px 10px;
-      border-bottom: 1px solid var(--line);
-      vertical-align: top;
-      background:#fff;
+      border-bottom: 1px solid rgba(230,236,255,0.9);
+      vertical-align: middle;
+      font-size: 13px;
     }
-    tbody tr:last-child td{ border-bottom:none; }
-    .numCol{ width: 34px; color:#475569; font-size:12px; }
-    .descCol{ width: 320px; }
-    .smallCol{ width: 72px; }
-    .moneyCol{ width: 92px; }
-    .totalCol{ width: 110px; text-align:right; font-weight:800; }
-    .actionsCol{ width: 56px; text-align:center; }
-
-    .cellInput, .cellInputSmall{
+    tbody tr:last-child td{border-bottom:0}
+    .colNum{width: 34px; color: var(--muted); font-weight: 700}
+    .colDesc{width: 44%;}
+    .colSmall{width: 84px;}
+    .colTiny{width: 72px;}
+    .colTotal{width: 130px; font-weight: 900; text-align:right; white-space:nowrap;}
+    .cellInput{
       width:100%;
-      border: 1px solid #dbe3f6;
+      border:1px solid #d0d5dd;
+      background:#fff;
       border-radius: 10px;
       padding: 8px 10px;
-      font-size: 12px;
+      font-size: 13px;
       outline:none;
-      background:#fff;
-      color: var(--ink);
     }
-    .cellInputSmall{
-      padding: 7px 8px;
-      text-align:center;
-    }
-    .trashBtn{
-      width: 34px; height: 34px;
-      border-radius: 12px;
-      border: 1px solid rgba(185,28,28,.25);
-      background: rgba(185,28,28,.08);
-      color: var(--danger);
+    .cellInput:focus{border-color: var(--accent)}
+    .cellInputNum{text-align:center}
+    .removeBtn{
+      border:0;
+      background: rgba(239,68,68,0.12);
+      color: #b42318;
+      font-weight: 900;
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
       cursor:pointer;
-      font-weight:900;
     }
     .hint{
-      margin: 8px 2px 0;
       font-size: 11px;
-      color: #64748b;
+      color: var(--muted);
+      padding: 8px 10px 12px;
     }
-    .blueBar{
-      margin: 10px 0 10px;
-      height: 5px;
-      background: #2563eb;
+    .blueRule{
+      height: 4px;
+      background: var(--blue);
       border-radius: 999px;
-    }
-
-    /* Notes + summary */
-    .bottomRow{
-      display:grid;
-      grid-template-columns: 1fr 260px;
-      gap: 18px;
       margin-top: 10px;
     }
-    .notesBox textarea{
-      width:100%;
-      min-height: 110px;
-      resize: vertical;
-      border: 1px solid #dbe3f6;
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 12px;
-      outline:none;
-    }
 
-    .summaryBox{
-      border: 1px solid #dbe3f6;
+    .bottomGrid{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: 1.35fr 0.85fr;
+      gap: 16px;
+      align-items:start;
+    }
+    .noteBox{
+      border: 1px solid #d0d5dd;
+      border-radius: 12px;
+      padding: 10px 10px;
+      min-height: 96px;
+      width:100%;
+      font-size: 13px;
+      outline:none;
+      resize: vertical;
+    }
+    .summary{
+      background: #f6f8ff;
+      border: 1px solid #e6ecff;
       border-radius: 12px;
       overflow:hidden;
-      background:#fbfcff;
+    }
+    .summary h3{
+      margin: 0;
+      padding: 10px 12px;
+      font-size: 12px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      background: #eef2ff;
+      border-bottom: 1px solid #e6ecff;
     }
     .sumRow{
       display:flex;
-      justify-content:space-between;
-      padding: 9px 10px;
-      font-size: 12px;
-      border-bottom: 1px solid #e8eefc;
-    }
-    .sumRow:last-child{ border-bottom:none; }
-    .sumRow .k{ color:#475569; }
-    .sumRow .v{ font-weight: 800; }
-    .sumTotal{
-      background: #f2f5ff;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(230,236,255,0.9);
       font-size: 13px;
     }
-
-    .maxRowsMsg{
-      margin-top: 8px;
-      font-size: 12px;
-      color: #b45309;
-      display:none;
-    }
-    .maxRowsMsg.show{ display:block; }
-
-    /* Mobile tweaks */
-    @media (max-width: 740px){
-      .paper{
-        width: 100%;
-        min-height: auto;
-        border-radius: 16px;
-      }
-      .headerRow{
-        grid-template-columns: 1fr;
-      }
-      .metaGrid{
-        grid-template-columns: 110px 1fr;
-      }
-      .twoCols{
-        grid-template-columns: 1fr;
-      }
-      .bottomRow{
-        grid-template-columns: 1fr;
-      }
-      .topbarInner{
-        justify-content: space-between;
-      }
-      .btn{ padding: 10px 12px; }
-    }
-
-    /* ---------------- PDF summary (hidden A4) ---------------- */
-    .pdfHost{
-      position: fixed;
-      left:-10000px;
-      top:0;
-      width: 210mm;
-      background: #fff;
-      color:#0b1220;
-    }
-    .pdfPage{
-      width: 210mm;
-      height: 297mm;
-      padding: 14mm 14mm 12mm;
-      box-sizing: border-box;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    }
-    .pdfHeader{
-      display:flex;
-      align-items:flex-start;
-      gap: 10mm;
-    }
-    .pdfLogo{
-      width: 120mm;
-      height: 22mm;
-      border: .3mm solid #e6ebf5;
-      border-radius: 4mm;
-      background:#f5f7ff;
-      padding: 3mm 4mm;
-      box-sizing:border-box;
-      display:flex;
-      align-items:center;
-    }
-    .pdfLogo img{ width:100%; height:100%; object-fit:contain; }
-    .pdfMeta{
-      flex: 1;
-      font-size: 9.5pt;
-      color:#334155;
-    }
-    .pdfMetaRow{
-      display:flex;
-      justify-content:space-between;
-      gap: 6mm;
-      border-bottom: .2mm solid #cfd7ea;
-      padding: 2mm 0;
-    }
-    .pdfMetaRow .k{ font-weight:700; color:#64748b; }
-    .pdfTitle{
-      margin-top: 6mm;
-      display:flex;
-      align-items:flex-end;
-      gap: 4mm;
-    }
-    .pdfTitle .t{
-      font-size: 16pt;
-      letter-spacing: .12em;
+    .sumRow:last-child{border-bottom:0}
+    .sumRow strong{font-weight: 900}
+    .sumTotal{
       font-weight: 900;
-    }
-    .pdfTitle .r{
-      height: 1.2mm;
-      background: #ef4444;
-      flex:1;
-      border-radius: 99mm;
-      transform: translateY(-2mm);
+      font-size: 14px;
     }
 
-    .pdfSection{
-      margin-top: 4mm;
-      font-size: 9pt;
-      color:#0b1220;
+    /* Mobile */
+    @media (max-width: 780px){
+      .sheet{padding: 16px 14px}
+      .header{grid-template-columns: 1fr; gap: 14px;}
+      .metaGrid{grid-template-columns: 110px 1fr;}
+      .twoCol{grid-template-columns: 1fr;}
+      .kv{grid-template-columns: 110px 1fr;}
+      .bottomGrid{grid-template-columns: 1fr;}
+      .itemsWrap{overflow-x:auto}
+      .colDesc{min-width: 260px;}
+      .colTotal{min-width: 120px;}
     }
-    .pdfSection .st{
-      font-size: 8.5pt;
-      letter-spacing: .08em;
-      font-weight:900;
-      color:#1f2a44;
-      margin-bottom: 2mm;
-    }
-    .pdfTwo{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6mm;
-    }
-    .pdfFieldRow{
-      display:flex;
-      justify-content:space-between;
-      border-bottom: .2mm solid #e7ecf5;
-      padding: 1.6mm 0;
-      gap: 4mm;
-      font-size: 9pt;
-    }
-    .pdfFieldRow .k{ color:#64748b; font-weight:700; min-width: 32mm; }
-    .pdfFieldRow .v{ text-align:right; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-    .pdfTableWrap{
-      margin-top: 4mm;
-      border: .3mm solid #e7ecf5;
-      border-radius: 4mm;
-      overflow:hidden;
+    /* PDF summary: hidden off-screen */
+    .pdfRoot{
+      position: fixed;
+      left: -99999px;
+      top: 0;
+      width: 210mm;
+      min-height: 297mm;
+      background: #fff;
+      color: #101828;
+      padding: 14mm;
     }
-    .pdfTable{
-      width:100%;
-      border-collapse: collapse;
-      font-size: 9pt;
+    .pdfRoot .sheet{box-shadow:none; border-radius: 0; padding:0;}
+    .pdfRoot .topbar{display:none}
+    .pdfRoot .cellInput, .pdfRoot .removeBtn{display:none !important}
+    .pdfText{
+      font-size: 13px;
+      padding: 8px 10px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: transparent;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
-    .pdfTable thead th{
-      background:#f2f5ff;
-      padding: 2.4mm 2.4mm;
-      border-bottom: .3mm solid #e7ecf5;
-      text-align:left;
-      white-space:nowrap;
+    .pdfRoot .itemsWrap{background:#f6f8ff}
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(17,24,39,0.92);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 100;
     }
-    .pdfTable tbody td{
-      padding: 2.4mm 2.4mm;
-      border-bottom: .2mm solid #eef2ff;
-      vertical-align: top;
-    }
-    .pdfTable tbody tr:last-child td{ border-bottom:none; }
-    .pdfRight{ text-align:right; }
-    .pdfBlueBar{
-      margin-top: 4mm;
-      height: 1.4mm;
-      background:#2563eb;
-      border-radius: 99mm;
-    }
-    .pdfBottom{
-      margin-top: 4mm;
-      display:grid;
-      grid-template-columns: 1fr 70mm;
-      gap: 6mm;
-    }
-    .pdfNotes{
-      border: .3mm solid #e7ecf5;
-      border-radius: 4mm;
-      padding: 3mm 3mm;
-      font-size: 9pt;
-      min-height: 22mm;
-      white-space: pre-wrap;
-    }
-    .pdfSummary{
-      border: .3mm solid #e7ecf5;
-      border-radius: 4mm;
-      overflow:hidden;
-      font-size: 9pt;
-    }
-    .pdfSumRow{
-      display:flex;
-      justify-content:space-between;
-      padding: 2.2mm 2.6mm;
-      border-bottom: .2mm solid #eef2ff;
-    }
-    .pdfSumRow:last-child{ border-bottom:none; }
-    .pdfSumRow .k{ color:#475569; }
-    .pdfSumRow .v{ font-weight:900; }
-    .pdfSumTotal{
-      background:#f2f5ff;
-      font-size: 10pt;
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-2px);
     }
   </style>
 </head>
-
 <body>
+
   <div class="topbar">
     <div class="topbarInner">
-      <button class="btn" id="btnAddRow">+ Riga</button>
-      <button class="btn btnDanger" id="btnReset">Reset</button>
-      <button class="btn btnPrimary" id="btnPdf">Scarica PDF</button>
+      <button id="btnAdd" class="btn">+ Riga</button>
+      <button id="btnReset" class="btn btnDanger">Reset</button>
+      <button id="btnPdf" class="btn btnPrimary">Scarica PDF</button>
     </div>
   </div>
 
   <div class="wrap">
-    <div class="paper" id="paper">
-      <div class="headerRow">
-        <div>
-          <div class="logoBox">
-            <img id="logoImg" src="./logo.png" alt="Logo" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block';" />
-            <div id="logoFallback" style="display:none; font-weight:900; letter-spacing:.18em; color:#111;">SEEMAX</div>
-          </div>
+    <div class="sheet" id="uiRoot">
+
+      <div class="header">
+        <div class="logoBanner">
+          <img class="logoImg" id="logoImg" src="./logo.png" alt="Seemax" />
         </div>
 
         <div class="metaGrid">
-          <label>Numero Prev.</label>
-          <input id="qNumber" value="P-20260204-001" />
+          <div class="label">Numero Prev.</div>
+          <input class="field" id="q_number" value="Prev.194-02-2026" />
 
-          <label>Data</label>
-          <input id="qDate" type="date" />
+          <div class="label">Data</div>
+          <input class="field" id="q_date" type="date" />
 
-          <label>Validità</label>
-          <select id="qValidity">
-            <option value="30 giorni" selected>30 giorni</option>
-            <option value="15 giorni">15 giorni</option>
+          <div class="label">Validità</div>
+          <select class="select" id="q_validity">
             <option value="7 giorni">7 giorni</option>
+            <option value="15 giorni">15 giorni</option>
+            <option value="30 giorni" selected>30 giorni</option>
+            <option value="60 giorni">60 giorni</option>
           </select>
 
-          <label>Riferimento</label>
-          <input id="qRef" placeholder="Nome Agente" />
+          <div class="label">Riferimento</div>
+          <input class="field" id="q_ref" value="Nome Agente" />
         </div>
       </div>
 
       <div class="titleRow">
         <h1>PREVENTIVO</h1>
-        <div class="line"></div>
+        <div class="redLine"></div>
       </div>
 
-      <div class="sectionTitle">DATI CLIENTE</div>
-      <div class="twoCols">
-        <div class="fieldGrid">
-          <label>Ragione sociale</label><input id="cCompany" placeholder="Cliente S.p.A." />
-          <label>Referente</label><input id="cContact" placeholder="Nome Cognome" />
-          <label>Email</label><input id="cEmail" placeholder="cliente@email.it" />
-          <label>Telefono</label><input id="cPhone" placeholder="+39 ..." />
-        </div>
+      <div class="section">
+        <h2>Dati cliente</h2>
+        <div class="twoCol">
+          <div class="kv">
+            <div class="label">Ragione sociale</div><input class="field" id="c_company" placeholder="Ragione sociale" />
+            <div class="label">Referente</div><input class="field" id="c_contact" placeholder="Nome Cognome" />
+            <div class="label">Email</div><input class="field" id="c_email" placeholder="cliente@email.it" />
+            <div class="label">Telefono</div><input class="field" id="c_phone" placeholder="+39 ..." />
+          </div>
 
-        <div class="fieldGrid">
-          <label>Indirizzo</label><input id="cAddress" placeholder="Via, CAP, Città" />
-          <label>P.IVA / CF</label><input id="cVat" placeholder="IT... / CF..." />
-          <label>Codice destinatario</label><input id="cSdI" placeholder="XXXXXXX" />
-          <label>PEC</label><input id="cPec" placeholder="pec@pec.it" />
+          <div class="kv">
+            <div class="label">Indirizzo</div><input class="field" id="c_address" placeholder="Via, CAP, Città" />
+            <div class="label">P.IVA / CF</div><input class="field" id="c_vat" placeholder="IT... / CF..." />
+            <div class="label">Codice destinatario</div><input class="field" id="c_sdicode" placeholder="XXXXXXX" />
+            <div class="label">PEC</div><input class="field" id="c_pec" placeholder="pec@pec.it" />
+          </div>
         </div>
       </div>
 
-      <div class="sectionTitle" style="margin-top:14px;">VOCI DI PREVENTIVO</div>
-
-      <div class="tableWrap">
-        <div class="tableScroller">
-          <table id="itemsTable" aria-label="Voci di preventivo">
+      <div class="section">
+        <h2>Voci di preventivo</h2>
+        <div class="itemsWrap">
+          <table>
             <thead>
               <tr>
-                <th class="numCol">#</th>
-                <th class="descCol">Descrizione</th>
-                <th class="smallCol">Q.tà</th>
-                <th class="moneyCol">Prezzo unit.</th>
-                <th class="smallCol">Sconto %</th>
-                <th class="smallCol">IVA %</th>
-                <th class="totalCol">Totale riga</th>
-                <th class="actionsCol"></th>
+                <th class="colNum">#</th>
+                <th class="colDesc">Descrizione</th>
+                <th class="colTiny">Q.tà</th>
+                <th class="colSmall">Prezzo unit.</th>
+                <th class="colTiny">Sconto %</th>
+                <th class="colTiny">IVA %</th>
+                <th class="colTotal">Totale riga</th>
+                <th style="width:44px;"></th>
               </tr>
             </thead>
-            <tbody id="itemsBody"></tbody>
+            <tbody id="itemsBody">
+              <!-- rows injected -->
+            </tbody>
           </table>
+          <div class="hint">Suggerimento: usa la virgola per i decimali (es. 1,50). Il totale viene calcolato automaticamente.</div>
         </div>
+        <div class="blueRule"></div>
       </div>
 
-      <div class="hint">Suggerimento: usa la virgola per i decimali (es. 1,50). Il totale viene calcolato automaticamente.</div>
-      <div id="maxRowsMsg" class="maxRowsMsg">Hai raggiunto il limite massimo di 5 righe.</div>
-
-      <div class="blueBar"></div>
-
-      <div class="bottomRow">
-        <div class="notesBox">
-          <div class="sectionTitle">NOTE</div>
-          <textarea id="qNotes" placeholder="Note, condizioni, tempi di consegna, modalità di pagamento..."></textarea>
+      <div class="bottomGrid">
+        <div>
+          <div class="section" style="margin-top:0">
+            <h2>Note</h2>
+            <textarea class="noteBox" id="q_notes" placeholder="Note, condizioni, tempi di consegna, modalità di pagamento..."></textarea>
+          </div>
         </div>
 
         <div>
-          <div class="sectionTitle">RIEPILOGO</div>
-          <div class="summaryBox">
-            <div class="sumRow"><div class="k">Subtotale</div><div class="v" id="sumSubtotal">0,00 €</div></div>
-            <div class="sumRow"><div class="k">Sconto totale</div><div class="v" id="sumDiscount">0,00 €</div></div>
-            <div class="sumRow"><div class="k">Imponibile</div><div class="v" id="sumTaxable">0,00 €</div></div>
-            <div class="sumRow"><div class="k">IVA totale</div><div class="v" id="sumVat">0,00 €</div></div>
-            <div class="sumRow sumTotal"><div class="k" style="font-weight:900;">TOTALE</div><div class="v" id="sumTotal">0,00 €</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Hidden PDF summary host -->
-  <div class="pdfHost" aria-hidden="true">
-    <div class="pdfPage" id="pdfPage">
-      <div class="pdfHeader">
-        <div class="pdfLogo">
-          <img id="pdfLogoImg" src="./logo.png" alt="Logo" />
-        </div>
-        <div class="pdfMeta">
-          <div class="pdfMetaRow"><span class="k">Numero Prev.</span><span class="v" id="pdfNumber"></span></div>
-          <div class="pdfMetaRow"><span class="k">Data</span><span class="v" id="pdfDate"></span></div>
-          <div class="pdfMetaRow"><span class="k">Validità</span><span class="v" id="pdfValidity"></span></div>
-          <div class="pdfMetaRow"><span class="k">Riferimento</span><span class="v" id="pdfRef"></span></div>
-        </div>
-      </div>
-
-      <div class="pdfTitle">
-        <div class="t">PREVENTIVO</div>
-        <div class="r"></div>
-      </div>
-
-      <div class="pdfSection">
-        <div class="st">DATI CLIENTE</div>
-        <div class="pdfTwo">
-          <div>
-            <div class="pdfFieldRow"><span class="k">Ragione sociale</span><span class="v" id="pdfCCompany"></span></div>
-            <div class="pdfFieldRow"><span class="k">Referente</span><span class="v" id="pdfCContact"></span></div>
-            <div class="pdfFieldRow"><span class="k">Email</span><span class="v" id="pdfCEmail"></span></div>
-            <div class="pdfFieldRow"><span class="k">Telefono</span><span class="v" id="pdfCPhone"></span></div>
-          </div>
-          <div>
-            <div class="pdfFieldRow"><span class="k">Indirizzo</span><span class="v" id="pdfCAddress"></span></div>
-            <div class="pdfFieldRow"><span class="k">P.IVA / CF</span><span class="v" id="pdfCVat"></span></div>
-            <div class="pdfFieldRow"><span class="k">Cod. destinatario</span><span class="v" id="pdfCSdi"></span></div>
-            <div class="pdfFieldRow"><span class="k">PEC</span><span class="v" id="pdfCPec"></span></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="pdfSection">
-        <div class="st">VOCI DI PREVENTIVO</div>
-        <div class="pdfTableWrap">
-          <table class="pdfTable" id="pdfItemsTable">
-            <thead>
-              <tr>
-                <th style="width:8mm;">#</th>
-                <th>Descrizione</th>
-                <th style="width:12mm;">Q.tà</th>
-                <th style="width:22mm;">Prezzo</th>
-                <th style="width:16mm;">Sconto</th>
-                <th style="width:14mm;">IVA</th>
-                <th style="width:26mm; text-align:right;">Totale riga</th>
-              </tr>
-            </thead>
-            <tbody id="pdfItemsBody"></tbody>
-          </table>
-        </div>
-        <div class="pdfBlueBar"></div>
-
-        <div class="pdfBottom">
-          <div>
-            <div class="st">NOTE</div>
-            <div class="pdfNotes" id="pdfNotes"></div>
-          </div>
-          <div>
-            <div class="st">RIEPILOGO</div>
-            <div class="pdfSummary">
-              <div class="pdfSumRow"><div class="k">Subtotale</div><div class="v" id="pdfSumSubtotal"></div></div>
-              <div class="pdfSumRow"><div class="k">Sconto totale</div><div class="v" id="pdfSumDiscount"></div></div>
-              <div class="pdfSumRow"><div class="k">Imponibile</div><div class="v" id="pdfSumTaxable"></div></div>
-              <div class="pdfSumRow"><div class="k">IVA totale</div><div class="v" id="pdfSumVat"></div></div>
-              <div class="pdfSumRow pdfSumTotal"><div class="k" style="font-weight:900;">TOTALE</div><div class="v" id="pdfSumTotal"></div></div>
+          <div class="section" style="margin-top:0">
+            <h2>Riepilogo</h2>
+            <div class="summary">
+              <h3>Riepilogo</h3>
+              <div class="sumRow"><span>Subtotale</span><strong id="sum_sub">0,00 €</strong></div>
+              <div class="sumRow"><span>Sconto totale</span><strong id="sum_disc">0,00 €</strong></div>
+              <div class="sumRow"><span>Imponibile</span><strong id="sum_taxable">0,00 €</strong></div>
+              <div class="sumRow"><span>IVA totale</span><strong id="sum_vat">0,00 €</strong></div>
+              <div class="sumRow sumTotal"><span>TOTALE</span><strong id="sum_total">0,00 €</strong></div>
             </div>
           </div>
         </div>
@@ -697,21 +472,37 @@
     </div>
   </div>
 
+  <!-- PDF summary root (off-screen) -->
+  <div class="pdfRoot" id="pdfRoot" aria-hidden="true"></div>
+
+  <div class="toast" id="toast">Messaggio</div>
+
+  <!-- libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
   <script>
+    // ===== Utilities =====
     const MAX_ROWS = 5;
-    const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+
+    const eurFmt = new Intl.NumberFormat('it-IT', { style:'currency', currency:'EUR' });
 
     function parseNum(v){
-      if(v == null) return 0;
+      if(v === null || v === undefined) return 0;
       const s = String(v).trim().replace(/\./g,'').replace(',', '.');
       const n = Number(s);
       return Number.isFinite(n) ? n : 0;
     }
-    function clamp(n, min, max){
-      n = Number(n);
-      if(!Number.isFinite(n)) return min;
-      return Math.min(max, Math.max(min, n));
+    function clamp(n,min,max){ return Math.min(Math.max(n,min),max); }
+
+    function toast(msg){
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(window.__toastT);
+      window.__toastT = setTimeout(()=> el.classList.remove('show'), 2200);
     }
+
     function todayISO(){
       const d = new Date();
       const yyyy = d.getFullYear();
@@ -719,238 +510,394 @@
       const dd = String(d.getDate()).padStart(2,'0');
       return `${yyyy}-${mm}-${dd}`;
     }
-    function formatDateIT(iso){
-      if(!iso) return '';
-      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-      if(!m) return iso;
-      return `${m[3]}/${m[2]}/${m[1]}`;
+
+    // ===== Data model =====
+    let rows = [];
+
+    function defaultRow(){
+      return { desc:'', qty:1, price:0, disc:0, vat:22 };
     }
 
-    const itemsBody = document.getElementById('itemsBody');
-    const maxRowsMsg = document.getElementById('maxRowsMsg');
-
-    function rowTemplate(idx){
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="numCol">${idx}</td>
-        <td class="descCol"><input class="cellInput js-desc" placeholder="Prodotto / descrizione..." /></td>
-        <td class="smallCol"><input class="cellInputSmall js-qty" type="number" min="0" step="1" value="1" /></td>
-        <td class="moneyCol"><input class="cellInputSmall js-price" inputmode="decimal" placeholder="0,00" /></td>
-        <td class="smallCol"><input class="cellInputSmall js-disc" type="number" min="0" max="100" step="1" value="0" /></td>
-        <td class="smallCol"><input class="cellInputSmall js-vat" type="number" min="0" max="100" step="1" value="22" /></td>
-        <td class="totalCol"><span class="js-lineTotal">0,00 €</span></td>
-        <td class="actionsCol"><button class="trashBtn js-del" title="Elimina">×</button></td>
-      `;
-      return tr;
+    function ensureMinRows(){
+      if(rows.length === 0) rows.push(defaultRow());
     }
 
-    function refreshRowNumbers(){
-      [...itemsBody.querySelectorAll('tr')].forEach((tr, i) => {
-        const cell = tr.querySelector('td.numCol');
-        if(cell) cell.textContent = String(i+1);
+    // ===== Rendering =====
+    function renderRows(){
+      const body = document.getElementById('itemsBody');
+      body.innerHTML = '';
+
+      rows.forEach((r, idx) => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td class="colNum">${idx+1}</td>
+          <td class="colDesc">
+            <input class="cellInput" data-k="desc" data-i="${idx}" placeholder="Prodotto / descrizione..." value="${escapeHtml(r.desc)}"/>
+          </td>
+          <td class="colTiny">
+            <input class="cellInput cellInputNum" data-k="qty" data-i="${idx}" inputmode="decimal" value="${String(r.qty).replace('.',',')}"/>
+          </td>
+          <td class="colSmall">
+            <input class="cellInput cellInputNum" data-k="price" data-i="${idx}" inputmode="decimal" value="${String(r.price).replace('.',',')}"/>
+          </td>
+          <td class="colTiny">
+            <input class="cellInput cellInputNum" data-k="disc" data-i="${idx}" inputmode="decimal" value="${String(r.disc).replace('.',',')}"/>
+          </td>
+          <td class="colTiny">
+            <input class="cellInput cellInputNum" data-k="vat" data-i="${idx}" inputmode="decimal" value="${String(r.vat).replace('.',',')}"/>
+          </td>
+          <td class="colTotal" id="rowTotal_${idx}">0,00 €</td>
+          <td style="text-align:right;">
+            <button class="removeBtn" data-act="remove" data-i="${idx}" title="Rimuovi riga">×</button>
+          </td>
+        `;
+        body.appendChild(tr);
       });
+
+      updateAddBtnState();
+      recalcAll();
     }
 
-    function hookRow(tr){
-      const inputs = tr.querySelectorAll('input');
-      inputs.forEach(inp => inp.addEventListener('input', computeTotals));
-      tr.querySelector('.js-del').addEventListener('click', () => {
-        tr.remove();
-        refreshRowNumbers();
-        maxRowsMsg.classList.toggle('show', itemsBody.querySelectorAll('tr').length >= MAX_ROWS);
-        computeTotals();
-      });
-      tr.querySelector('.js-qty').addEventListener('change', (e) => {
-        e.target.value = String(Math.max(0, parseInt(e.target.value || '0', 10) || 0));
-        computeTotals();
-      });
-      tr.querySelector('.js-disc').addEventListener('change', (e) => {
-        e.target.value = String(clamp(e.target.value, 0, 100));
-        computeTotals();
-      });
-      tr.querySelector('.js-vat').addEventListener('change', (e) => {
-        e.target.value = String(clamp(e.target.value, 0, 100));
-        computeTotals();
-      });
-    }
-
-    function addRow(){
-      const current = itemsBody.querySelectorAll('tr').length;
-      if(current >= MAX_ROWS){
-        maxRowsMsg.classList.add('show');
-        return;
-      }
-      const tr = rowTemplate(current+1);
-      itemsBody.appendChild(tr);
-      hookRow(tr);
-      maxRowsMsg.classList.toggle('show', itemsBody.querySelectorAll('tr').length >= MAX_ROWS);
-      computeTotals();
-    }
-
-    function getRows(){
-      return [...itemsBody.querySelectorAll('tr')].map(tr => {
-        const desc = tr.querySelector('.js-desc')?.value?.trim() || '';
-        const qty = parseNum(tr.querySelector('.js-qty')?.value);
-        const price = parseNum(tr.querySelector('.js-price')?.value);
-        const discPct = clamp(tr.querySelector('.js-disc')?.value, 0, 100);
-        const vatPct = clamp(tr.querySelector('.js-vat')?.value, 0, 100);
-        return { tr, desc, qty, price, discPct, vatPct };
-      });
-    }
-
-    function computeTotals(){
-      let subtotal = 0;
-      let discountTotal = 0;
-      let taxable = 0;
-      let vatTotal = 0;
-
-      for(const r of getRows()){
-        const lineGross = r.qty * r.price;
-        const lineDisc = lineGross * (r.discPct / 100);
-        const lineNet = lineGross - lineDisc;
-        const lineVat = lineNet * (r.vatPct / 100);
-        const lineTotal = lineNet + lineVat;
-
-        subtotal += lineGross;
-        discountTotal += lineDisc;
-        taxable += lineNet;
-        vatTotal += lineVat;
-
-        const el = r.tr.querySelector('.js-lineTotal');
-        if(el) el.textContent = euro.format(lineTotal || 0);
-      }
-
-      document.getElementById('sumSubtotal').textContent = euro.format(subtotal);
-      document.getElementById('sumDiscount').textContent = euro.format(discountTotal);
-      document.getElementById('sumTaxable').textContent = euro.format(taxable);
-      document.getElementById('sumVat').textContent = euro.format(vatTotal);
-      document.getElementById('sumTotal').textContent = euro.format(taxable + vatTotal);
-    }
-
-    function resetAll(){
-      document.getElementById('qNumber').value = 'P-' + todayISO().replaceAll('-','') + '-001';
-      document.getElementById('qDate').value = todayISO();
-      document.getElementById('qValidity').value = '30 giorni';
-      document.getElementById('qRef').value = '';
-
-      ['cCompany','cContact','cEmail','cPhone','cAddress','cVat','cSdI','cPec'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.value = '';
-      });
-
-      document.getElementById('qNotes').value = '';
-
-      itemsBody.innerHTML = '';
-      addRow();
-      maxRowsMsg.classList.remove('show');
-      computeTotals();
+    function updateAddBtnState(){
+      const btn = document.getElementById('btnAdd');
+      btn.disabled = rows.length >= MAX_ROWS;
     }
 
     function escapeHtml(s){
-      return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-    function formatInt(n){
-      n = Math.round(Number(n) || 0);
-      return String(n);
-    }
-    function formatPct(n){
-      n = Math.round(Number(n) || 0);
-      return String(Math.max(0, Math.min(100, n)));
+      return String(s ?? '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
     }
 
-    function fillPdfSummary(){
-      document.getElementById('pdfNumber').textContent = document.getElementById('qNumber').value || '';
-      document.getElementById('pdfDate').textContent = formatDateIT(document.getElementById('qDate').value || '');
-      document.getElementById('pdfValidity').textContent = document.getElementById('qValidity').value || '';
-      document.getElementById('pdfRef').textContent = document.getElementById('qRef').value || '';
+    // ===== Calculations =====
+    function calcLine(r){
+      const qty = clamp(parseNum(r.qty), 0, 1e9);
+      const price = clamp(parseNum(r.price), 0, 1e12);
+      const disc = clamp(parseNum(r.disc), 0, 100);
+      const vat = clamp(parseNum(r.vat), 0, 100);
 
-      document.getElementById('pdfCCompany').textContent = document.getElementById('cCompany').value || '';
-      document.getElementById('pdfCContact').textContent = document.getElementById('cContact').value || '';
-      document.getElementById('pdfCEmail').textContent = document.getElementById('cEmail').value || '';
-      document.getElementById('pdfCPhone').textContent = document.getElementById('cPhone').value || '';
-      document.getElementById('pdfCAddress').textContent = document.getElementById('cAddress').value || '';
-      document.getElementById('pdfCVat').textContent = document.getElementById('cVat').value || '';
-      document.getElementById('pdfCSdi').textContent = document.getElementById('cSdI').value || '';
-      document.getElementById('pdfCPec').textContent = document.getElementById('cPec').value || '';
+      const net = qty * price;
+      const discAmt = net * (disc/100);
+      const taxable = net - discAmt;
+      const vatAmt = taxable * (vat/100);
+      const gross = taxable + vatAmt;
+      return { net, discAmt, taxable, vatAmt, gross };
+    }
 
-      document.getElementById('pdfNotes').textContent = document.getElementById('qNotes').value || '';
+    function recalcAll(){
+      let sub=0, disc=0, taxable=0, vat=0, total=0;
 
-      const pdfBody = document.getElementById('pdfItemsBody');
-      pdfBody.innerHTML = '';
-      const rows = getRows();
-      rows.forEach((r, i) => {
-        const lineGross = r.qty * r.price;
-        const lineDisc = lineGross * (r.discPct / 100);
-        const lineNet = lineGross - lineDisc;
-        const lineVat = lineNet * (r.vatPct / 100);
-        const lineTotal = lineNet + lineVat;
+      rows.forEach((r, idx) => {
+        const c = calcLine(r);
+        sub += c.net;
+        disc += c.discAmt;
+        taxable += c.taxable;
+        vat += c.vatAmt;
+        total += c.gross;
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${i+1}</td>
-          <td>${escapeHtml(r.desc || '')}</td>
-          <td>${formatInt(r.qty)}</td>
-          <td>${euro.format(r.price || 0)}</td>
-          <td>${formatPct(r.discPct)}%</td>
-          <td>${formatPct(r.vatPct)}%</td>
-          <td class="pdfRight">${euro.format(lineTotal || 0)}</td>
-        `;
-        pdfBody.appendChild(tr);
+        const rt = document.getElementById(`rowTotal_${idx}`);
+        if(rt) rt.textContent = eurFmt.format(c.gross);
       });
 
-      document.getElementById('pdfSumSubtotal').textContent = document.getElementById('sumSubtotal').textContent;
-      document.getElementById('pdfSumDiscount').textContent = document.getElementById('sumDiscount').textContent;
-      document.getElementById('pdfSumTaxable').textContent = document.getElementById('sumTaxable').textContent;
-      document.getElementById('pdfSumVat').textContent = document.getElementById('sumVat').textContent;
-      document.getElementById('pdfSumTotal').textContent = document.getElementById('sumTotal').textContent;
+      document.getElementById('sum_sub').textContent = eurFmt.format(sub);
+      document.getElementById('sum_disc').textContent = eurFmt.format(disc);
+      document.getElementById('sum_taxable').textContent = eurFmt.format(taxable);
+      document.getElementById('sum_vat').textContent = eurFmt.format(vat);
+      document.getElementById('sum_total').textContent = eurFmt.format(total);
     }
 
-    function waitForImages(root){
-      const imgs = [...root.querySelectorAll('img')].filter(img => !img.complete);
-      if(imgs.length === 0) return Promise.resolve();
-      return Promise.all(imgs.map(img => new Promise(res => {
-        img.onload = () => res();
-        img.onerror = () => res();
-      })));
-    }
+    // ===== Events =====
+    document.addEventListener('input', (e) => {
+      const t = e.target;
+      if(!t || !t.dataset) return;
+      const i = Number(t.dataset.i);
+      const k = t.dataset.k;
+      if(!Number.isFinite(i) || !k) return;
 
-    async function downloadPdf(){
-      fillPdfSummary();
-      const target = document.getElementById('pdfPage');
-      await waitForImages(target);
+      if(k === 'desc'){
+        rows[i].desc = t.value;
+      }else{
+        rows[i][k] = t.value;
+      }
+      recalcAll();
+    });
 
-      const canvas = await html2canvas(target, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        windowWidth: target.scrollWidth,
-        windowHeight: target.scrollHeight
-      });
+    document.addEventListener('click', (e) => {
+      const t = e.target;
+      if(!t) return;
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ orientation:'p', unit:'mm', format:'a4' });
-      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
-      const filename = `Preventivo_${(document.getElementById('qNumber').value || 'SEEMAX').replaceAll(' ','_')}.pdf`;
-      pdf.save(filename);
-    }
+      if(t.id === 'btnAdd'){
+        if(rows.length >= MAX_ROWS){
+          toast(`Limite massimo: ${MAX_ROWS} righe`);
+          return;
+        }
+        rows.push(defaultRow());
+        renderRows();
+        return;
+      }
 
-    document.getElementById('btnAddRow').addEventListener('click', addRow);
-    document.getElementById('btnReset').addEventListener('click', resetAll);
-    document.getElementById('btnPdf').addEventListener('click', async () => {
-      try{ await downloadPdf(); }
-      catch(err){
-        console.error(err);
-        alert('Impossibile generare il PDF. Verifica la connessione o eventuali blocchi (adblock).');
+      if(t.id === 'btnReset'){
+        if(confirm('Vuoi resettare il preventivo?')){
+          resetAll();
+        }
+        return;
+      }
+
+      if(t.id === 'btnPdf'){
+        downloadPdf().catch(err => {
+          console.error(err);
+          alert('Impossibile generare il PDF. Verifica la connessione (CDN) e riprova.');
+        });
+        return;
+      }
+
+      if(t.dataset && t.dataset.act === 'remove'){
+        const i = Number(t.dataset.i);
+        if(rows.length <= 1){
+          toast('Serve almeno 1 riga');
+          return;
+        }
+        rows.splice(i,1);
+        renderRows();
       }
     });
 
-    // init
-    document.getElementById('qDate').value = todayISO();
-    addRow(); // 1 row by default
-    computeTotals();
+    function resetAll(){
+      // keep date today
+      document.getElementById('q_number').value = '';
+      document.getElementById('q_date').value = todayISO();
+      document.getElementById('q_validity').value = '30 giorni';
+      document.getElementById('q_ref').value = '';
+
+      ['c_company','c_contact','c_email','c_phone','c_address','c_vat','c_sdicode','c_pec','q_notes']
+        .forEach(id => document.getElementById(id).value = '');
+
+      rows = [defaultRow()];
+      renderRows();
+    }
+
+    // ===== PDF =====
+    function getField(id){ return (document.getElementById(id)?.value ?? '').trim(); }
+
+    function buildPdfDom(){
+      const pdfRoot = document.getElementById('pdfRoot');
+
+      // Build a static snapshot (same look, no inputs)
+      const headerNumber = getField('q_number') || '-';
+      const dateVal = getField('q_date') || '-';
+      const validity = document.getElementById('q_validity').value;
+      const ref = getField('q_ref') || '-';
+
+      const clientLeft = [
+        ['Ragione sociale', getField('c_company')],
+        ['Referente', getField('c_contact')],
+        ['Email', getField('c_email')],
+        ['Telefono', getField('c_phone')],
+      ];
+      const clientRight = [
+        ['Indirizzo', getField('c_address')],
+        ['P.IVA / CF', getField('c_vat')],
+        ['Cod. destinatario', getField('c_sdicode')],
+        ['PEC', getField('c_pec')],
+      ];
+
+      // Totals
+      let sub=0, disc=0, taxable=0, vat=0, total=0;
+      const rowCalcs = rows.map(r => {
+        const c = calcLine(r);
+        sub += c.net; disc += c.discAmt; taxable += c.taxable; vat += c.vatAmt; total += c.gross;
+        return c;
+      });
+
+      const notes = getField('q_notes');
+
+      const rowsHtml = rows.map((r, idx) => {
+        const c = rowCalcs[idx];
+        const qty = String(parseNum(r.qty)).replace('.',',');
+        const price = eurFmt.format(parseNum(r.price));
+        const discPct = `${clamp(parseNum(r.disc),0,100).toFixed(0)}%`;
+        const vatPct = `${clamp(parseNum(r.vat),0,100).toFixed(0)}%`;
+        const totalLine = eurFmt.format(c.gross);
+        const desc = escapeHtml(r.desc || '');
+        return `
+          <tr>
+            <td class="colNum">${idx+1}</td>
+            <td class="colDesc"><div class="pdfText" title="${desc}">${desc || '&nbsp;'}</div></td>
+            <td class="colTiny"><div class="pdfText" style="text-align:center">${qty}</div></td>
+            <td class="colSmall"><div class="pdfText" style="text-align:center">${price}</div></td>
+            <td class="colTiny"><div class="pdfText" style="text-align:center">${discPct}</div></td>
+            <td class="colTiny"><div class="pdfText" style="text-align:center">${vatPct}</div></td>
+            <td class="colTotal">${totalLine}</td>
+            <td style="width:44px;"></td>
+          </tr>
+        `;
+      }).join('');
+
+      const kvBlock = (pairs) => pairs.map(([k,v]) => `
+        <div class="label">${escapeHtml(k)}</div>
+        <div class="pdfText" title="${escapeHtml(v||'')}">${escapeHtml(v||'')}</div>
+      `).join('');
+
+      pdfRoot.innerHTML = `
+        <div class="sheet">
+          <div class="header">
+            <div class="logoBanner">
+              <img class="logoImg" src="./logo.png" alt="Seemax" />
+            </div>
+
+            <div class="metaGrid">
+              <div class="label">Numero Prev.</div><div class="pdfText">${escapeHtml(headerNumber)}</div>
+              <div class="label">Data</div><div class="pdfText">${escapeHtml(formatDateIT(dateVal))}</div>
+              <div class="label">Validità</div><div class="pdfText">${escapeHtml(validity)}</div>
+              <div class="label">Riferimento</div><div class="pdfText">${escapeHtml(ref)}</div>
+            </div>
+          </div>
+
+          <div class="titleRow" style="margin-top:12px">
+            <h1>PREVENTIVO</h1>
+            <div class="redLine"></div>
+          </div>
+
+          <div class="section">
+            <h2>Dati cliente</h2>
+            <div class="twoCol">
+              <div class="kv">${kvBlock(clientLeft)}</div>
+              <div class="kv">${kvBlock(clientRight)}</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Voci di preventivo</h2>
+            <div class="itemsWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="colNum">#</th>
+                    <th class="colDesc">Descrizione</th>
+                    <th class="colTiny">Q.tà</th>
+                    <th class="colSmall">Prezzo unit.</th>
+                    <th class="colTiny">Sconto %</th>
+                    <th class="colTiny">IVA %</th>
+                    <th class="colTotal">Totale riga</th>
+                    <th style="width:44px;"></th>
+                  </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+              </table>
+            </div>
+            <div class="blueRule"></div>
+          </div>
+
+          <div class="bottomGrid" style="margin-top:12px">
+            <div>
+              <div class="section" style="margin-top:0">
+                <h2>Note</h2>
+                <div class="noteBox" style="min-height:72px; white-space:pre-wrap;">${escapeHtml(notes)}</div>
+              </div>
+            </div>
+
+            <div>
+              <div class="section" style="margin-top:0">
+                <h2>Riepilogo</h2>
+                <div class="summary">
+                  <h3>Riepilogo</h3>
+                  <div class="sumRow"><span>Subtotale</span><strong>${eurFmt.format(sub)}</strong></div>
+                  <div class="sumRow"><span>Sconto totale</span><strong>${eurFmt.format(disc)}</strong></div>
+                  <div class="sumRow"><span>Imponibile</span><strong>${eurFmt.format(taxable)}</strong></div>
+                  <div class="sumRow"><span>IVA totale</span><strong>${eurFmt.format(vat)}</strong></div>
+                  <div class="sumRow sumTotal"><span>TOTALE</span><strong>${eurFmt.format(total)}</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function formatDateIT(iso){
+      // iso: YYYY-MM-DD
+      if(!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || '-';
+      const [y,m,d] = iso.split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    async function waitForImages(container){
+      const imgs = Array.from(container.querySelectorAll('img'));
+      await Promise.all(imgs.map(img => {
+        if(img.complete && img.naturalWidth > 0) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.addEventListener('load', resolve, {once:true});
+          img.addEventListener('error', resolve, {once:true}); // resolve anyway
+        });
+      }));
+    }
+
+    async function downloadPdf(){
+      if(typeof html2canvas !== 'function' || !window.jspdf?.jsPDF){
+        alert('Librerie PDF non disponibili (CDN).');
+        return;
+      }
+
+      // build DOM snapshot
+      buildPdfDom();
+      const pdfRoot = document.getElementById('pdfRoot');
+      await waitForImages(pdfRoot);
+
+      const canvas = await html2canvas(pdfRoot, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowWidth: pdfRoot.scrollWidth,
+        windowHeight: pdfRoot.scrollHeight
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const { jsPDF } = window.jspdf;
+
+      const pdf = new jsPDF({ orientation:'portrait', unit:'pt', format:'a4' });
+
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+
+      const imgW = canvas.width;
+      const imgH = canvas.height;
+
+      const scale = Math.min(pageW / imgW, pageH / imgH);
+      const w = imgW * scale;
+      const h = imgH * scale;
+      const x = (pageW - w) / 2;
+      const y = (pageH - h) / 2;
+
+      pdf.addImage(imgData, 'PNG', x, y, w, h, undefined, 'FAST');
+
+      const safeNumber = (getField('q_number') || 'Preventivo').replace(/[^\w\-]+/g,'_');
+      pdf.save(`${safeNumber}.pdf`);
+    }
+
+    // ===== init =====
+    (function init(){
+      // date default
+      document.getElementById('q_date').value = todayISO();
+
+      // Ensure logo is crisp and not "invisible" if png has large padding.
+      // With the provided cropped logo file this will look perfect.
+      // If the image fails, show fallback text.
+      const logo = document.getElementById('logoImg');
+      logo.addEventListener('error', () => {
+        logo.replaceWith(Object.assign(document.createElement('div'), {
+          textContent: 'SEEMAX',
+          style: 'font-weight:900;color:#1f3a8a;letter-spacing:.14em'
+        }));
+      }, { once:true });
+
+      rows = [defaultRow()];
+      renderRows();
+    })();
   </script>
 </body>
 </html>
