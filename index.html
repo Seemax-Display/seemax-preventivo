@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Seemax - Foglio Preventivo</title>
+
+  <!-- PDF libs (no stampa) -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+  <style>
+    :root{
+      --bg1:#070b17;
+      --bg2:#0b2a3a;
+      --paper:#ffffff;
+      --ink:#0b1220;
+      --muted:#667085;
+      --line:#e7ecf5;
+      --accent:#2563eb;
+      --danger:#b91c1c;
+      --shadow: 0 20px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:#eaf0ff;
+      background: radial-gradient(1200px 700px at 30% 15%, #12214d 0%, rgba(18,33,77,0) 55%),
+                  radial-gradient(900px 600px at 85% 35%, #0b3a46 0%, rgba(11,58,70,0) 55%),
+                  linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+    }
+
+    /* Top bar */
+    .topbar{
+      position:sticky; top:0; z-index:20;
+      background: rgba(6,10,24,.65);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .topbarInner{
+      max-width: 1050px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+    }
+    .btn{
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color:#f3f6ff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease;
+    }
+    .btn:hover{ background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.22);}
+    .btn:active{ transform: scale(.99); }
+    .btnPrimary{
+      background: var(--accent);
+      border-color: rgba(255,255,255,.0);
+    }
+    .btnPrimary:hover{ background:#1e55da; }
+    .btnDanger{
+      background: rgba(185,28,28,.18);
+      border-color: rgba(185,28,28,.35);
+      color:#ffd7d7;
+    }
+
+    .wrap{
+      max-width: 1050px;
+      margin: 24px auto 60px;
+      padding: 0 16px;
+      display:flex;
+      justify-content:center;
+    }
+
+    /* Paper */
+    .paper{
+      width: 210mm;
+      min-height: 297mm;
+      background: var(--paper);
+      color: var(--ink);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 22px 18px;
+    }
+
+    /* Header inside paper */
+    .headerRow{
+      display:grid;
+      grid-template-columns: 1fr 300px;
+      gap: 18px;
+      align-items:start;
+    }
+    .logoBox{
+      height: 70px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background:#f5f7ff;
+      display:flex;
+      align-items:center;
+      padding: 10px 14px;
+      overflow:hidden;
+    }
+    .logoBox img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display:block;
+    }
+
+    .metaGrid{
+      display:grid;
+      grid-template-columns: 120px 1fr;
+      column-gap: 10px;
+      row-gap: 8px;
+      align-items:center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .metaGrid label{
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 11px;
+    }
+    .metaGrid input, .metaGrid select{
+      width:100%;
+      border: none;
+      border-bottom: 1px solid #cfd7ea;
+      padding: 6px 6px;
+      font-size: 12px;
+      outline: none;
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .titleRow{
+      margin-top: 10px;
+      display:flex;
+      align-items:flex-end;
+      gap: 14px;
+    }
+    .titleRow h1{
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: .12em;
+      font-weight: 800;
+    }
+    .titleRow .line{
+      height: 4px;
+      background: #ef4444;
+      flex: 1;
+      border-radius: 999px;
+      transform: translateY(-4px);
+    }
+
+    /* Section titles */
+    .sectionTitle{
+      margin: 14px 0 8px;
+      font-size: 11px;
+      letter-spacing: .08em;
+      font-weight: 800;
+      color: #1f2a44;
+    }
+
+    .twoCols{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .fieldGrid{
+      display:grid;
+      grid-template-columns: 120px 1fr;
+      column-gap: 10px;
+      row-gap: 8px;
+      align-items:center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .fieldGrid label{
+      font-weight: 600;
+      font-size: 11px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .fieldGrid input{
+      width:100%;
+      border: none;
+      border-bottom: 1px solid #cfd7ea;
+      padding: 6px 6px;
+      font-size: 12px;
+      outline: none;
+      background: transparent;
+      color: var(--ink);
+    }
+
+    /* Products */
+    .tableWrap{
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fbfcff;
+    }
+    .tableScroller{
+      overflow-x:auto;
+      -webkit-overflow-scrolling: touch;
+      background:#fbfcff;
+    }
+    table{
+      width:100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+    thead th{
+      font-size: 11px;
+      color:#334155;
+      text-align:left;
+      padding: 10px 10px;
+      background: #f2f5ff;
+      border-bottom: 1px solid var(--line);
+      white-space:nowrap;
+    }
+    tbody td{
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      background:#fff;
+    }
+    tbody tr:last-child td{ border-bottom:none; }
+    .numCol{ width: 34px; color:#475569; font-size:12px; }
+    .descCol{ width: 320px; }
+    .smallCol{ width: 72px; }
+    .moneyCol{ width: 92px; }
+    .totalCol{ width: 110px; text-align:right; font-weight:800; }
+    .actionsCol{ width: 56px; text-align:center; }
+
+    .cellInput, .cellInputSmall{
+      width:100%;
+      border: 1px solid #dbe3f6;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      outline:none;
+      background:#fff;
+      color: var(--ink);
+    }
+    .cellInputSmall{
+      padding: 7px 8px;
+      text-align:center;
+    }
+    .trashBtn{
+      width: 34px; height: 34px;
+      border-radius: 12px;
+      border: 1px solid rgba(185,28,28,.25);
+      background: rgba(185,28,28,.08);
+      color: var(--danger);
+      cursor:pointer;
+      font-weight:900;
+    }
+    .hint{
+      margin: 8px 2px 0;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .blueBar{
+      margin: 10px 0 10px;
+      height: 5px;
+      background: #2563eb;
+      border-radius: 999px;
+    }
+
+    /* Notes + summary */
+    .bottomRow{
+      display:grid;
+      grid-template-columns: 1fr 260px;
+      gap: 18px;
+      margin-top: 10px;
+    }
+    .notesBox textarea{
+      width:100%;
+      min-height: 110px;
+      resize: vertical;
+      border: 1px solid #dbe3f6;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+      outline:none;
+    }
+
+    .summaryBox{
+      border: 1px solid #dbe3f6;
+      border-radius: 12px;
+      overflow:hidden;
+      background:#fbfcff;
+    }
+    .sumRow{
+      display:flex;
+      justify-content:space-between;
+      padding: 9px 10px;
+      font-size: 12px;
+      border-bottom: 1px solid #e8eefc;
+    }
+    .sumRow:last-child{ border-bottom:none; }
+    .sumRow .k{ color:#475569; }
+    .sumRow .v{ font-weight: 800; }
+    .sumTotal{
+      background: #f2f5ff;
+      font-size: 13px;
+    }
+
+    .maxRowsMsg{
+      margin-top: 8px;
+      font-size: 12px;
+      color: #b45309;
+      display:none;
+    }
+    .maxRowsMsg.show{ display:block; }
+
+    /* Mobile tweaks */
+    @media (max-width: 740px){
+      .paper{
+        width: 100%;
+        min-height: auto;
+        border-radius: 16px;
+      }
+      .headerRow{
+        grid-template-columns: 1fr;
+      }
+      .metaGrid{
+        grid-template-columns: 110px 1fr;
+      }
+      .twoCols{
+        grid-template-columns: 1fr;
+      }
+      .bottomRow{
+        grid-template-columns: 1fr;
+      }
+      .topbarInner{
+        justify-content: space-between;
+      }
+      .btn{ padding: 10px 12px; }
+    }
+
+    /* ---------------- PDF summary (hidden A4) ---------------- */
+    .pdfHost{
+      position: fixed;
+      left:-10000px;
+      top:0;
+      width: 210mm;
+      background: #fff;
+      color:#0b1220;
+    }
+    .pdfPage{
+      width: 210mm;
+      height: 297mm;
+      padding: 14mm 14mm 12mm;
+      box-sizing: border-box;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+    .pdfHeader{
+      display:flex;
+      align-items:flex-start;
+      gap: 10mm;
+    }
+    .pdfLogo{
+      width: 120mm;
+      height: 22mm;
+      border: .3mm solid #e6ebf5;
+      border-radius: 4mm;
+      background:#f5f7ff;
+      padding: 3mm 4mm;
+      box-sizing:border-box;
+      display:flex;
+      align-items:center;
+    }
+    .pdfLogo img{ width:100%; height:100%; object-fit:contain; }
+    .pdfMeta{
+      flex: 1;
+      font-size: 9.5pt;
+      color:#334155;
+    }
+    .pdfMetaRow{
+      display:flex;
+      justify-content:space-between;
+      gap: 6mm;
+      border-bottom: .2mm solid #cfd7ea;
+      padding: 2mm 0;
+    }
+    .pdfMetaRow .k{ font-weight:700; color:#64748b; }
+    .pdfTitle{
+      margin-top: 6mm;
+      display:flex;
+      align-items:flex-end;
+      gap: 4mm;
+    }
+    .pdfTitle .t{
+      font-size: 16pt;
+      letter-spacing: .12em;
+      font-weight: 900;
+    }
+    .pdfTitle .r{
+      height: 1.2mm;
+      background: #ef4444;
+      flex:1;
+      border-radius: 99mm;
+      transform: translateY(-2mm);
+    }
+
+    .pdfSection{
+      margin-top: 4mm;
+      font-size: 9pt;
+      color:#0b1220;
+    }
+    .pdfSection .st{
+      font-size: 8.5pt;
+      letter-spacing: .08em;
+      font-weight:900;
+      color:#1f2a44;
+      margin-bottom: 2mm;
+    }
+    .pdfTwo{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6mm;
+    }
+    .pdfFieldRow{
+      display:flex;
+      justify-content:space-between;
+      border-bottom: .2mm solid #e7ecf5;
+      padding: 1.6mm 0;
+      gap: 4mm;
+      font-size: 9pt;
+    }
+    .pdfFieldRow .k{ color:#64748b; font-weight:700; min-width: 32mm; }
+    .pdfFieldRow .v{ text-align:right; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    .pdfTableWrap{
+      margin-top: 4mm;
+      border: .3mm solid #e7ecf5;
+      border-radius: 4mm;
+      overflow:hidden;
+    }
+    .pdfTable{
+      width:100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+    }
+    .pdfTable thead th{
+      background:#f2f5ff;
+      padding: 2.4mm 2.4mm;
+      border-bottom: .3mm solid #e7ecf5;
+      text-align:left;
+      white-space:nowrap;
+    }
+    .pdfTable tbody td{
+      padding: 2.4mm 2.4mm;
+      border-bottom: .2mm solid #eef2ff;
+      vertical-align: top;
+    }
+    .pdfTable tbody tr:last-child td{ border-bottom:none; }
+    .pdfRight{ text-align:right; }
+    .pdfBlueBar{
+      margin-top: 4mm;
+      height: 1.4mm;
+      background:#2563eb;
+      border-radius: 99mm;
+    }
+    .pdfBottom{
+      margin-top: 4mm;
+      display:grid;
+      grid-template-columns: 1fr 70mm;
+      gap: 6mm;
+    }
+    .pdfNotes{
+      border: .3mm solid #e7ecf5;
+      border-radius: 4mm;
+      padding: 3mm 3mm;
+      font-size: 9pt;
+      min-height: 22mm;
+      white-space: pre-wrap;
+    }
+    .pdfSummary{
+      border: .3mm solid #e7ecf5;
+      border-radius: 4mm;
+      overflow:hidden;
+      font-size: 9pt;
+    }
+    .pdfSumRow{
+      display:flex;
+      justify-content:space-between;
+      padding: 2.2mm 2.6mm;
+      border-bottom: .2mm solid #eef2ff;
+    }
+    .pdfSumRow:last-child{ border-bottom:none; }
+    .pdfSumRow .k{ color:#475569; }
+    .pdfSumRow .v{ font-weight:900; }
+    .pdfSumTotal{
+      background:#f2f5ff;
+      font-size: 10pt;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="topbarInner">
+      <button class="btn" id="btnAddRow">+ Riga</button>
+      <button class="btn btnDanger" id="btnReset">Reset</button>
+      <button class="btn btnPrimary" id="btnPdf">Scarica PDF</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="paper" id="paper">
+      <div class="headerRow">
+        <div>
+          <div class="logoBox">
+            <img id="logoImg" src="./logo.png" alt="Logo" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block';" />
+            <div id="logoFallback" style="display:none; font-weight:900; letter-spacing:.18em; color:#111;">SEEMAX</div>
+          </div>
+        </div>
+
+        <div class="metaGrid">
+          <label>Numero Prev.</label>
+          <input id="qNumber" value="P-20260204-001" />
+
+          <label>Data</label>
+          <input id="qDate" type="date" />
+
+          <label>Validità</label>
+          <select id="qValidity">
+            <option value="30 giorni" selected>30 giorni</option>
+            <option value="15 giorni">15 giorni</option>
+            <option value="7 giorni">7 giorni</option>
+          </select>
+
+          <label>Riferimento</label>
+          <input id="qRef" placeholder="Nome Agente" />
+        </div>
+      </div>
+
+      <div class="titleRow">
+        <h1>PREVENTIVO</h1>
+        <div class="line"></div>
+      </div>
+
+      <div class="sectionTitle">DATI CLIENTE</div>
+      <div class="twoCols">
+        <div class="fieldGrid">
+          <label>Ragione sociale</label><input id="cCompany" placeholder="Cliente S.p.A." />
+          <label>Referente</label><input id="cContact" placeholder="Nome Cognome" />
+          <label>Email</label><input id="cEmail" placeholder="cliente@email.it" />
+          <label>Telefono</label><input id="cPhone" placeholder="+39 ..." />
+        </div>
+
+        <div class="fieldGrid">
+          <label>Indirizzo</label><input id="cAddress" placeholder="Via, CAP, Città" />
+          <label>P.IVA / CF</label><input id="cVat" placeholder="IT... / CF..." />
+          <label>Codice destinatario</label><input id="cSdI" placeholder="XXXXXXX" />
+          <label>PEC</label><input id="cPec" placeholder="pec@pec.it" />
+        </div>
+      </div>
+
+      <div class="sectionTitle" style="margin-top:14px;">VOCI DI PREVENTIVO</div>
+
+      <div class="tableWrap">
+        <div class="tableScroller">
+          <table id="itemsTable" aria-label="Voci di preventivo">
+            <thead>
+              <tr>
+                <th class="numCol">#</th>
+                <th class="descCol">Descrizione</th>
+                <th class="smallCol">Q.tà</th>
+                <th class="moneyCol">Prezzo unit.</th>
+                <th class="smallCol">Sconto %</th>
+                <th class="smallCol">IVA %</th>
+                <th class="totalCol">Totale riga</th>
+                <th class="actionsCol"></th>
+              </tr>
+            </thead>
+            <tbody id="itemsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="hint">Suggerimento: usa la virgola per i decimali (es. 1,50). Il totale viene calcolato automaticamente.</div>
+      <div id="maxRowsMsg" class="maxRowsMsg">Hai raggiunto il limite massimo di 5 righe.</div>
+
+      <div class="blueBar"></div>
+
+      <div class="bottomRow">
+        <div class="notesBox">
+          <div class="sectionTitle">NOTE</div>
+          <textarea id="qNotes" placeholder="Note, condizioni, tempi di consegna, modalità di pagamento..."></textarea>
+        </div>
+
+        <div>
+          <div class="sectionTitle">RIEPILOGO</div>
+          <div class="summaryBox">
+            <div class="sumRow"><div class="k">Subtotale</div><div class="v" id="sumSubtotal">0,00 €</div></div>
+            <div class="sumRow"><div class="k">Sconto totale</div><div class="v" id="sumDiscount">0,00 €</div></div>
+            <div class="sumRow"><div class="k">Imponibile</div><div class="v" id="sumTaxable">0,00 €</div></div>
+            <div class="sumRow"><div class="k">IVA totale</div><div class="v" id="sumVat">0,00 €</div></div>
+            <div class="sumRow sumTotal"><div class="k" style="font-weight:900;">TOTALE</div><div class="v" id="sumTotal">0,00 €</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden PDF summary host -->
+  <div class="pdfHost" aria-hidden="true">
+    <div class="pdfPage" id="pdfPage">
+      <div class="pdfHeader">
+        <div class="pdfLogo">
+          <img id="pdfLogoImg" src="./logo.png" alt="Logo" />
+        </div>
+        <div class="pdfMeta">
+          <div class="pdfMetaRow"><span class="k">Numero Prev.</span><span class="v" id="pdfNumber"></span></div>
+          <div class="pdfMetaRow"><span class="k">Data</span><span class="v" id="pdfDate"></span></div>
+          <div class="pdfMetaRow"><span class="k">Validità</span><span class="v" id="pdfValidity"></span></div>
+          <div class="pdfMetaRow"><span class="k">Riferimento</span><span class="v" id="pdfRef"></span></div>
+        </div>
+      </div>
+
+      <div class="pdfTitle">
+        <div class="t">PREVENTIVO</div>
+        <div class="r"></div>
+      </div>
+
+      <div class="pdfSection">
+        <div class="st">DATI CLIENTE</div>
+        <div class="pdfTwo">
+          <div>
+            <div class="pdfFieldRow"><span class="k">Ragione sociale</span><span class="v" id="pdfCCompany"></span></div>
+            <div class="pdfFieldRow"><span class="k">Referente</span><span class="v" id="pdfCContact"></span></div>
+            <div class="pdfFieldRow"><span class="k">Email</span><span class="v" id="pdfCEmail"></span></div>
+            <div class="pdfFieldRow"><span class="k">Telefono</span><span class="v" id="pdfCPhone"></span></div>
+          </div>
+          <div>
+            <div class="pdfFieldRow"><span class="k">Indirizzo</span><span class="v" id="pdfCAddress"></span></div>
+            <div class="pdfFieldRow"><span class="k">P.IVA / CF</span><span class="v" id="pdfCVat"></span></div>
+            <div class="pdfFieldRow"><span class="k">Cod. destinatario</span><span class="v" id="pdfCSdi"></span></div>
+            <div class="pdfFieldRow"><span class="k">PEC</span><span class="v" id="pdfCPec"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pdfSection">
+        <div class="st">VOCI DI PREVENTIVO</div>
+        <div class="pdfTableWrap">
+          <table class="pdfTable" id="pdfItemsTable">
+            <thead>
+              <tr>
+                <th style="width:8mm;">#</th>
+                <th>Descrizione</th>
+                <th style="width:12mm;">Q.tà</th>
+                <th style="width:22mm;">Prezzo</th>
+                <th style="width:16mm;">Sconto</th>
+                <th style="width:14mm;">IVA</th>
+                <th style="width:26mm; text-align:right;">Totale riga</th>
+              </tr>
+            </thead>
+            <tbody id="pdfItemsBody"></tbody>
+          </table>
+        </div>
+        <div class="pdfBlueBar"></div>
+
+        <div class="pdfBottom">
+          <div>
+            <div class="st">NOTE</div>
+            <div class="pdfNotes" id="pdfNotes"></div>
+          </div>
+          <div>
+            <div class="st">RIEPILOGO</div>
+            <div class="pdfSummary">
+              <div class="pdfSumRow"><div class="k">Subtotale</div><div class="v" id="pdfSumSubtotal"></div></div>
+              <div class="pdfSumRow"><div class="k">Sconto totale</div><div class="v" id="pdfSumDiscount"></div></div>
+              <div class="pdfSumRow"><div class="k">Imponibile</div><div class="v" id="pdfSumTaxable"></div></div>
+              <div class="pdfSumRow"><div class="k">IVA totale</div><div class="v" id="pdfSumVat"></div></div>
+              <div class="pdfSumRow pdfSumTotal"><div class="k" style="font-weight:900;">TOTALE</div><div class="v" id="pdfSumTotal"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const MAX_ROWS = 5;
+    const euro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
+
+    function parseNum(v){
+      if(v == null) return 0;
+      const s = String(v).trim().replace(/\./g,'').replace(',', '.');
+      const n = Number(s);
+      return Number.isFinite(n) ? n : 0;
+    }
+    function clamp(n, min, max){
+      n = Number(n);
+      if(!Number.isFinite(n)) return min;
+      return Math.min(max, Math.max(min, n));
+    }
+    function todayISO(){
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const dd = String(d.getDate()).padStart(2,'0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+    function formatDateIT(iso){
+      if(!iso) return '';
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+      if(!m) return iso;
+      return `${m[3]}/${m[2]}/${m[1]}`;
+    }
+
+    const itemsBody = document.getElementById('itemsBody');
+    const maxRowsMsg = document.getElementById('maxRowsMsg');
+
+    function rowTemplate(idx){
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="numCol">${idx}</td>
+        <td class="descCol"><input class="cellInput js-desc" placeholder="Prodotto / descrizione..." /></td>
+        <td class="smallCol"><input class="cellInputSmall js-qty" type="number" min="0" step="1" value="1" /></td>
+        <td class="moneyCol"><input class="cellInputSmall js-price" inputmode="decimal" placeholder="0,00" /></td>
+        <td class="smallCol"><input class="cellInputSmall js-disc" type="number" min="0" max="100" step="1" value="0" /></td>
+        <td class="smallCol"><input class="cellInputSmall js-vat" type="number" min="0" max="100" step="1" value="22" /></td>
+        <td class="totalCol"><span class="js-lineTotal">0,00 €</span></td>
+        <td class="actionsCol"><button class="trashBtn js-del" title="Elimina">×</button></td>
+      `;
+      return tr;
+    }
+
+    function refreshRowNumbers(){
+      [...itemsBody.querySelectorAll('tr')].forEach((tr, i) => {
+        const cell = tr.querySelector('td.numCol');
+        if(cell) cell.textContent = String(i+1);
+      });
+    }
+
+    function hookRow(tr){
+      const inputs = tr.querySelectorAll('input');
+      inputs.forEach(inp => inp.addEventListener('input', computeTotals));
+      tr.querySelector('.js-del').addEventListener('click', () => {
+        tr.remove();
+        refreshRowNumbers();
+        maxRowsMsg.classList.toggle('show', itemsBody.querySelectorAll('tr').length >= MAX_ROWS);
+        computeTotals();
+      });
+      tr.querySelector('.js-qty').addEventListener('change', (e) => {
+        e.target.value = String(Math.max(0, parseInt(e.target.value || '0', 10) || 0));
+        computeTotals();
+      });
+      tr.querySelector('.js-disc').addEventListener('change', (e) => {
+        e.target.value = String(clamp(e.target.value, 0, 100));
+        computeTotals();
+      });
+      tr.querySelector('.js-vat').addEventListener('change', (e) => {
+        e.target.value = String(clamp(e.target.value, 0, 100));
+        computeTotals();
+      });
+    }
+
+    function addRow(){
+      const current = itemsBody.querySelectorAll('tr').length;
+      if(current >= MAX_ROWS){
+        maxRowsMsg.classList.add('show');
+        return;
+      }
+      const tr = rowTemplate(current+1);
+      itemsBody.appendChild(tr);
+      hookRow(tr);
+      maxRowsMsg.classList.toggle('show', itemsBody.querySelectorAll('tr').length >= MAX_ROWS);
+      computeTotals();
+    }
+
+    function getRows(){
+      return [...itemsBody.querySelectorAll('tr')].map(tr => {
+        const desc = tr.querySelector('.js-desc')?.value?.trim() || '';
+        const qty = parseNum(tr.querySelector('.js-qty')?.value);
+        const price = parseNum(tr.querySelector('.js-price')?.value);
+        const discPct = clamp(tr.querySelector('.js-disc')?.value, 0, 100);
+        const vatPct = clamp(tr.querySelector('.js-vat')?.value, 0, 100);
+        return { tr, desc, qty, price, discPct, vatPct };
+      });
+    }
+
+    function computeTotals(){
+      let subtotal = 0;
+      let discountTotal = 0;
+      let taxable = 0;
+      let vatTotal = 0;
+
+      for(const r of getRows()){
+        const lineGross = r.qty * r.price;
+        const lineDisc = lineGross * (r.discPct / 100);
+        const lineNet = lineGross - lineDisc;
+        const lineVat = lineNet * (r.vatPct / 100);
+        const lineTotal = lineNet + lineVat;
+
+        subtotal += lineGross;
+        discountTotal += lineDisc;
+        taxable += lineNet;
+        vatTotal += lineVat;
+
+        const el = r.tr.querySelector('.js-lineTotal');
+        if(el) el.textContent = euro.format(lineTotal || 0);
+      }
+
+      document.getElementById('sumSubtotal').textContent = euro.format(subtotal);
+      document.getElementById('sumDiscount').textContent = euro.format(discountTotal);
+      document.getElementById('sumTaxable').textContent = euro.format(taxable);
+      document.getElementById('sumVat').textContent = euro.format(vatTotal);
+      document.getElementById('sumTotal').textContent = euro.format(taxable + vatTotal);
+    }
+
+    function resetAll(){
+      document.getElementById('qNumber').value = 'P-' + todayISO().replaceAll('-','') + '-001';
+      document.getElementById('qDate').value = todayISO();
+      document.getElementById('qValidity').value = '30 giorni';
+      document.getElementById('qRef').value = '';
+
+      ['cCompany','cContact','cEmail','cPhone','cAddress','cVat','cSdI','cPec'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.value = '';
+      });
+
+      document.getElementById('qNotes').value = '';
+
+      itemsBody.innerHTML = '';
+      addRow();
+      maxRowsMsg.classList.remove('show');
+      computeTotals();
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+    function formatInt(n){
+      n = Math.round(Number(n) || 0);
+      return String(n);
+    }
+    function formatPct(n){
+      n = Math.round(Number(n) || 0);
+      return String(Math.max(0, Math.min(100, n)));
+    }
+
+    function fillPdfSummary(){
+      document.getElementById('pdfNumber').textContent = document.getElementById('qNumber').value || '';
+      document.getElementById('pdfDate').textContent = formatDateIT(document.getElementById('qDate').value || '');
+      document.getElementById('pdfValidity').textContent = document.getElementById('qValidity').value || '';
+      document.getElementById('pdfRef').textContent = document.getElementById('qRef').value || '';
+
+      document.getElementById('pdfCCompany').textContent = document.getElementById('cCompany').value || '';
+      document.getElementById('pdfCContact').textContent = document.getElementById('cContact').value || '';
+      document.getElementById('pdfCEmail').textContent = document.getElementById('cEmail').value || '';
+      document.getElementById('pdfCPhone').textContent = document.getElementById('cPhone').value || '';
+      document.getElementById('pdfCAddress').textContent = document.getElementById('cAddress').value || '';
+      document.getElementById('pdfCVat').textContent = document.getElementById('cVat').value || '';
+      document.getElementById('pdfCSdi').textContent = document.getElementById('cSdI').value || '';
+      document.getElementById('pdfCPec').textContent = document.getElementById('cPec').value || '';
+
+      document.getElementById('pdfNotes').textContent = document.getElementById('qNotes').value || '';
+
+      const pdfBody = document.getElementById('pdfItemsBody');
+      pdfBody.innerHTML = '';
+      const rows = getRows();
+      rows.forEach((r, i) => {
+        const lineGross = r.qty * r.price;
+        const lineDisc = lineGross * (r.discPct / 100);
+        const lineNet = lineGross - lineDisc;
+        const lineVat = lineNet * (r.vatPct / 100);
+        const lineTotal = lineNet + lineVat;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i+1}</td>
+          <td>${escapeHtml(r.desc || '')}</td>
+          <td>${formatInt(r.qty)}</td>
+          <td>${euro.format(r.price || 0)}</td>
+          <td>${formatPct(r.discPct)}%</td>
+          <td>${formatPct(r.vatPct)}%</td>
+          <td class="pdfRight">${euro.format(lineTotal || 0)}</td>
+        `;
+        pdfBody.appendChild(tr);
+      });
+
+      document.getElementById('pdfSumSubtotal').textContent = document.getElementById('sumSubtotal').textContent;
+      document.getElementById('pdfSumDiscount').textContent = document.getElementById('sumDiscount').textContent;
+      document.getElementById('pdfSumTaxable').textContent = document.getElementById('sumTaxable').textContent;
+      document.getElementById('pdfSumVat').textContent = document.getElementById('sumVat').textContent;
+      document.getElementById('pdfSumTotal').textContent = document.getElementById('sumTotal').textContent;
+    }
+
+    function waitForImages(root){
+      const imgs = [...root.querySelectorAll('img')].filter(img => !img.complete);
+      if(imgs.length === 0) return Promise.resolve();
+      return Promise.all(imgs.map(img => new Promise(res => {
+        img.onload = () => res();
+        img.onerror = () => res();
+      })));
+    }
+
+    async function downloadPdf(){
+      fillPdfSummary();
+      const target = document.getElementById('pdfPage');
+      await waitForImages(target);
+
+      const canvas = await html2canvas(target, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        windowWidth: target.scrollWidth,
+        windowHeight: target.scrollHeight
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation:'p', unit:'mm', format:'a4' });
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+      const filename = `Preventivo_${(document.getElementById('qNumber').value || 'SEEMAX').replaceAll(' ','_')}.pdf`;
+      pdf.save(filename);
+    }
+
+    document.getElementById('btnAddRow').addEventListener('click', addRow);
+    document.getElementById('btnReset').addEventListener('click', resetAll);
+    document.getElementById('btnPdf').addEventListener('click', async () => {
+      try{ await downloadPdf(); }
+      catch(err){
+        console.error(err);
+        alert('Impossibile generare il PDF. Verifica la connessione o eventuali blocchi (adblock).');
+      }
+    });
+
+    // init
+    document.getElementById('qDate').value = todayISO();
+    addRow(); // 1 row by default
+    computeTotals();
+  </script>
+</body>
+</html>
