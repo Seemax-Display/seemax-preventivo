@@ -365,6 +365,21 @@
       opacity: 1;
       transform: translateX(-50%) translateY(-2px);
     }
+  
+    .topHint{
+      color: rgba(255,255,255,.75);
+      font-size: 12px;
+      margin: 0 10px 0 6px;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .btn:disabled{ opacity:.5; cursor:not-allowed; }
+    /* PDF signature */
+    .signRow{ display:flex; gap:18px; margin-top:14px; }
+    .signBox{ flex:1; border:1px solid #d0d5dd; border-radius:12px; padding:10px 12px; }
+    .signTitle{ font-size:10px; color:#475467; margin-bottom:12px; }
+    .signLine{ border-bottom:1px solid #98a2b3; height:18px; }
+
   </style>
 </head>
 <body>
@@ -372,6 +387,7 @@
   <div class="topbar">
     <div class="topbarInner">
       <button id="btnAdd" class="btn">+ Riga</button>
+      <span class="topHint">Max 5 righe</span>
       <button id="btnReset" class="btn btnDanger">Reset</button>
       <button id="btnPdf" class="btn btnPrimary">Scarica PDF</button>
     </div>
@@ -387,7 +403,7 @@
 
         <div class="metaGrid">
           <div class="label">Numero Prev.</div>
-          <input class="field" id="q_number" value="Prev.194-02-2026" />
+          <input class="field" id="q_number" placeholder="Prev-YYYYMMDD-001" value="" />
 
           <div class="label">Data</div>
           <input class="field" id="q_date" type="date" />
@@ -492,6 +508,8 @@
   <script>
     // ===== Utilities =====
     const MAX_ROWS = 5;
+    const COUNTER_KEY = 'seemax_quote_global_seq';
+    // Per azzerare il contatore (solo per fine test): apri la Console (F12) e lancia: SEEMAX_RESET_COUNTER()
 
     const eurFmt = new Intl.NumberFormat('it-IT', { style:'currency', currency:'EUR' });
 
@@ -519,8 +537,56 @@
       return `${yyyy}-${mm}-${dd}`;
     }
 
+    function pad3(n){ return String(n).padStart(3,'0'); }
+
+    function migrateOldCountersIfNeeded(){
+      // Migrazione: versioni vecchie salvavano un contatore "per giorno" (seemax_quote_seq_YYYYMMDD).
+      // Se il contatore globale non esiste ancora, prendiamo il massimo trovato per evitare duplicati.
+      try{
+        if(localStorage.getItem(COUNTER_KEY) !== null) return;
+        let max = 0;
+        for(let i=0;i<localStorage.length;i++){
+          const k = localStorage.key(i);
+          if(!k) continue;
+          if(/^seemax_quote_seq_\d{8}$/.test(k)){
+            const v = Number(localStorage.getItem(k) || '0') || 0;
+            if(v > max) max = v;
+          }
+        }
+        if(max > 0) localStorage.setItem(COUNTER_KEY, String(max));
+      }catch(e){ /* ignore */ }
+    }
+
+    
+    function nextQuoteNumber(){
+      migrateOldCountersIfNeeded();
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const dd = String(d.getDate()).padStart(2,'0');
+      const ymd = `${y}${m}${dd}`;
+      const cur = Number(localStorage.getItem(COUNTER_KEY) || '0') || 0;
+      const nxt = cur + 1;
+      localStorage.setItem(COUNTER_KEY, String(nxt));
+      return `Prev-${ymd}-${pad3(nxt)}`;
+    }
+
+    function sanitizeFilename(s){
+      return String(s || 'Preventivo')
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g,'')
+        .replace(/[^\w\-]+/g,'_')
+        .replace(/_+/g,'_')
+        .replace(/^_+|_+$/g,'')
+        .slice(0, 80) || 'Preventivo';
+    }
+
+    // ===== Data model =====
+
     // ===== Data model =====
     let rows = [];
+    let pageQuoteNumber = '';
+
 
     function defaultRow(){
       return { desc:'', qty:1, price:0, disc:0, vat:22 };
@@ -618,6 +684,23 @@
       document.getElementById('sum_total').textContent = eurFmt.format(total);
     }
 
+    
+    function validateBeforePdf(){
+      // At least one row with description
+      const hasItem = rows.some(r => String(r.desc||'').trim().length > 0);
+      if(!hasItem){
+        toast('Inserisci almeno una voce (descrizione).');
+        return false;
+      }
+      const num = getField('q_number');
+      if(!num){
+        // Non incrementiamo il contatore qui: il numero avanza solo all'apertura pagina
+        document.getElementById('q_number').value = pageQuoteNumber || '';
+        toast('Numero preventivo ripristinato');
+      }
+      return true;
+    }
+
     // ===== Events =====
     document.addEventListener('input', (e) => {
       const t = e.target;
@@ -656,6 +739,7 @@
       }
 
       if(t.id === 'btnPdf'){
+        if(!validateBeforePdf()) return;
         downloadPdf().catch(err => {
           console.error(err);
           alert('Impossibile generare il PDF. Verifica la connessione (CDN) e riprova.');
@@ -675,8 +759,8 @@
     });
 
     function resetAll(){
-      // keep date today
-      document.getElementById('q_number').value = '';
+      // reset to defaults
+      document.getElementById('q_number').value = pageQuoteNumber || document.getElementById('q_number').value;
       document.getElementById('q_date').value = todayISO();
       document.getElementById('q_validity').value = '30 giorni';
       document.getElementById('q_ref').value = '';
@@ -686,6 +770,7 @@
 
       rows = [defaultRow()];
       renderRows();
+      toast('Reset completato');
     }
 
     // ===== PDF =====
@@ -822,6 +907,19 @@
               </div>
             </div>
           </div>
+
+
+          <div class="signRow">
+            <div class="signBox">
+              <div class="signTitle">Firma cliente</div>
+              <div class="signLine"></div>
+            </div>
+            <div class="signBox">
+              <div class="signTitle">Firma agente</div>
+              <div class="signLine"></div>
+            </div>
+          </div>
+
         </div>
       `;
     }
@@ -889,12 +987,7 @@
 
     // ===== init =====
     (function init(){
-      // date default
-      document.getElementById('q_date').value = todayISO();
-
-      // Ensure logo is crisp and not "invisible" if png has large padding.
-      // With the provided cropped logo file this will look perfect.
-      // If the image fails, show fallback text.
+      // Logo fallback if missing
       const logo = document.getElementById('logoImg');
       logo.addEventListener('error', () => {
         logo.replaceWith(Object.assign(document.createElement('div'), {
@@ -903,8 +996,37 @@
         }));
       }, { once:true });
 
-      rows = [defaultRow()];
-      renderRows();
+      // Helper: reset contatore (solo per test)
+      window.SEEMAX_RESET_COUNTER = function(){
+        try{
+          localStorage.removeItem(COUNTER_KEY);
+          alert('Contatore azzerato. Al prossimo refresh ripartirà da 001.');
+        }catch(e){
+          alert('Impossibile azzerare il contatore (localStorage non disponibile).');
+        }
+      };
+
+      function initDefaults(){
+        // Ogni apertura pagina: nuovo numero progressivo + form vuoto
+        pageQuoteNumber = nextQuoteNumber();
+        document.getElementById('q_number').value = pageQuoteNumber;
+        document.getElementById('q_date').value = todayISO();
+        document.getElementById('q_validity').value = '30 giorni';
+        document.getElementById('q_ref').value = '';
+
+        ['c_company','c_contact','c_email','c_phone','c_address','c_vat','c_sdicode','c_pec','q_notes']
+          .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+
+        rows = [defaultRow()];
+        renderRows();
+      }
+
+      // Se il browser ripristina la pagina dalla cache (bfcache), forziamo reset + nuovo numero
+      window.addEventListener('pageshow', (ev) => {
+        if(ev.persisted) initDefaults();
+      });
+
+      initDefaults();
     })();
   </script>
 </body>
