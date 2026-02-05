@@ -92,26 +92,32 @@
       gap: 18px;
       align-items:start;
     }
+    
     .logoBanner{
       background: #f3f6ff;
       border: 1px solid #e6ecff;
       border-radius: 12px;
-      padding: 12px 14px;
-      min-height: 64px;
+      /* bigger logo area like your red rectangle */
+      height: 112px;
+      padding: 0 18px;
       display:flex;
       align-items:center;
       justify-content:center;
       overflow:hidden;
     }
-    /* No stretch: height fixed, width auto */
+/* No stretch: height fixed, width auto */
+    
+    /* Never stretch: keep aspect ratio */
     .logoImg{
-      height: 44px;
+      height: 100%;
       width: auto;
       max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      object-position: center;
       display:block;
     }
-
-    .metaGrid{
+.metaGrid{
       display:grid;
       grid-template-columns: 120px 1fr;
       gap: 10px 14px;
@@ -300,7 +306,9 @@
 
     /* Mobile */
     @media (max-width: 780px){
-      .sheet{padding: 16px 14px}
+      .sheet{padding: 16px 14px
+      .logoBanner{height: 88px;}
+}
       .header{grid-template-columns: 1fr; gap: 14px;}
       .metaGrid{grid-template-columns: 110px 1fr;}
       .twoCol{grid-template-columns: 1fr;}
