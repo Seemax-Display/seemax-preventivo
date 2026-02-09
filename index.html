@@ -306,17 +306,21 @@
 
     /* Mobile */
     @media (max-width: 780px){
-      .sheet{padding: 16px 14px
-      .logoBanner{height: 88px;}
-}
+      .sheet{padding: 16px 14px;}
+      .logoBanner{height: 96px;}
       .header{grid-template-columns: 1fr; gap: 14px;}
       .metaGrid{grid-template-columns: 110px 1fr;}
       .twoCol{grid-template-columns: 1fr;}
       .kv{grid-template-columns: 110px 1fr;}
       .bottomGrid{grid-template-columns: 1fr;}
-      .itemsWrap{overflow-x:auto}
+      .itemsWrap{overflow-x:auto; -webkit-overflow-scrolling: touch;}
+      /* Mobile: make the quote-items table wide enough so inputs are readable */
+      .itemsWrap table{min-width: 720px;}
       .colDesc{min-width: 260px;}
-      .colTotal{min-width: 120px;}
+      .colSmall{min-width: 110px;}
+      .colTiny{min-width: 96px;}
+      .colTotal{min-width: 130px;}
+      .cellInput{font-size: 14px; padding: 10px 12px;}
     }
 
     /* PDF summary: hidden off-screen */
