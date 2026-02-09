@@ -12,7 +12,7 @@ Poi abilita GitHub Pages su branch main / root.
 - Reset: ripulisce i campi e lascia 1 riga
 - Scarica PDF: genera un riepilogo A4 in 1 pagina (senza stampa)
 
-##Il primo numero (001)
+## Il primo numero (001)
 
 Se apri la pagina in un browser “pulito” (mai usato prima) parte da ...-001.
 
